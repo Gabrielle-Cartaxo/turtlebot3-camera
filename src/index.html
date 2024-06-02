@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8" />
+
+<!-- ROS libraries -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/eventemitter2@6.4.9/lib/eventemitter2.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.min.js"></script>
+
+<script type="text/javascript">
+  var ros = new ROSLIB.Ros({
+    url : 'ws://localhost:9090'
+  });
+
+  ros.on('connection', function() {
+    console.log('Connected to websocket server.');
+  });
+
+  ros.on('error', function(error) {
+    console.log('Error connecting to websocket server: ', error);
+  });
+
+  ros.on('close', function() {
+    console.log('Connection to websocket server closed.');
+  });
+
+  // Topic to receive video frames
+  var videoTopic = new ROSLIB.Topic({
+    ros : ros,
+    name : '/video_frames',
+    messageType : 'sensor_msgs/CompressedImage'
+  });
+
+  // Function to handle incoming video frames
+  videoTopic.subscribe(function(message) {
+    var img = document.getElementById('videoStream');
+    if (message.data) {
+      var data = message.data;
+      img.src = 'data:image/jpeg;base64,' + data;
+      console.log('Received video frame');
+    } else {
+      console.error('Received invalid frame data');
+    }
+  });
+
+  // Topic to publish velocity commands
+  var cmdVelTopic = new ROSLIB.Topic({
+    ros : ros,
+    name : '/cmd_vel',
+    messageType : 'geometry_msgs/Twist'
+  });
+
+  var moveInterval;
+  var isMoving = false;
+
+  function sendCommand(linearX, angularZ) {
+    var twist = new ROSLIB.Message({
+      linear : {
+        x : linearX,
+        y : 0.0,
+        z : 0.0
+      },
+      angular : {
+        x : 0.0,
+        y : 0.0,
+        z : angularZ
+      }
+    });
+    cmdVelTopic.publish(twist);
+  }
+
+  function startMoving(linearX, angularZ) {
+    if (!isMoving) {
+      isMoving = true;
+      sendCommand(linearX, angularZ);
+      moveInterval = setInterval(() => sendCommand(linearX, angularZ), 50);
+    }
+  }
+
+  function stopMoving() {
+    if (isMoving) {
+      clearInterval(moveInterval);
+      isMoving = false;
+      sendCommand(0.0, 0.0); // Stop the robot
+    }
+  }
+
+  document.addEventListener('mouseup', stopMoving);
+  document.addEventListener('mouseleave', stopMoving);
+
+  window.onload = function() {
+    // Subscribe to video frames once
+    videoTopic.subscribe();
+  };
+</script>
+</head>
+
+<body>
+    <h1>Real-time Video Stream from ROS2 Topic</h1>
+    <img id="videoStream" alt="Video Stream" style="width: 640px; height: 480px;" />
+    <p>Latência estimada: <span id="latency">Calculando...</span> ms</p>
+
+    <div align="center">
+        <button onmousedown="startMoving(5.0, 0.0)">Forward</button><br>
+        <button onmousedown="startMoving(0.0, 2.0)">Left</button>
+        <button onmousedown="startMoving(0.0, -2.0)">Right</button><br>
+        <button onmousedown="startMoving(-5.0, 0.0)">Backward</button><br><br>
+        <button onmousedown="stopMoving()">Stop</button>
+    </div>
+
+    <script type="text/javascript">
+        var lastFrameTime = null;
+        var img = document.getElementById('videoStream');
+        var latencyDisplay = document.getElementById('latency');
+    
+        videoTopic.subscribe(function(message) {
+          if (message.data) {
+            var data = message.data;
+            img.src = 'data:image/jpeg;base64,' + data;
+            
+            var currentTime = performance.now();
+            if (lastFrameTime !== null) {
+              var latency = currentTime - lastFrameTime;
+              latencyDisplay.textContent = latency.toFixed(2);
+            }
+            lastFrameTime = currentTime;
+            
+            console.log('Received video frame');
+          } else {
+            console.error('Received invalid frame data');
+          }
+        });
+    
+        window.onload = function() {
+          videoTopic.subscribe();
+        };
+        
+      </script>
+</body>
+</html>
