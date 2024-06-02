@@ -35,7 +35,7 @@ ros2 launch webots_ros2_turtlebot robot_launch.py
 Abra um terceiro terminal, navegue até o diretório do seu pacote ROS2 e execute o nó publicador Python:
 
 ```bash
-publisher.py
+python3 publisher.py
 ```
 
 ### Passo 5: Abrir o Arquivo HTML no Navegador
