@@ -43,3 +43,13 @@ python3 publisher.py
 Abra um navegador da web e carregue o arquivo `index.html` que está na pasta src.
 
 Com esses passos, você deverá ser capaz de executar o projeto e controlar o robô simulado através da interface HTML, garantindo que todas as dependências estejam instaladas corretamente e que o ambiente ROS2 esteja configurado e funcionando adequadamente.
+
+### Detalhes:
+
+- O vídeo transmitido sou eu porque, para fins de teste, utilizei minha webcam. 
+
+- A latência estimada é mostrada tanto na interface do html quanto no terminal do publisher.
+
+- A implementação está pobrinha porque tive muita dificuldade de fazer uma aplicação com flask rodar junto com um pacote ROS. Logo, voltamos para o básico funcional, que apesar de ser feio, faz o que precisamos.
+
+- Caso queira ver a gravação de um teste, é só assistir esse vídeo [aqui](https://youtu.be/Jd_7SQLfKr0)!
